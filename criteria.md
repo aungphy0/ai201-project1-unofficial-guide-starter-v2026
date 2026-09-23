@@ -57,6 +57,8 @@ in at least 4 of 5 tries.
 
 ## 4. Something about your chunks
 
+For at least 4 of my 5 test questions, the retrieved chunks are the right size: they contain enough context to answer the question without including excessive unrelated information, and each chunk is between 200 and 800 tokens.
+
 <!-- YOU WRITE THIS ONE.
 
      How would you know if your chunks were the right size? Name something
@@ -78,6 +80,8 @@ in at least 4 of 5 tries.
 ---
 
 ## 5. Your choice
+
+For at least 4 of my 5 test questions, the system's answer is supported by the retrieved documents: when I compare the answer with its cited sources, I can find a passage that directly supports each key claim, and the system does not make up information that isn't in the documents.
 
 <!-- YOU WRITE THIS ONE TOO.
 
