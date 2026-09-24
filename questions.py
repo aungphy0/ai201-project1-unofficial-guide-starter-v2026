@@ -21,13 +21,35 @@ Swap them for your own if you like. Keep five of them either way: criterion 3
 names a target of "4 of 5", and four of three is not a thing.
 """
 
+# Corpus: advice_threads. Each `expects` is the one fact the answer has to
+# carry, and each one is a phrase that appears verbatim in the thread it comes
+# from, so a grounded answer should reproduce it.
 QUESTIONS = [
-    # {"question": "...", "expects": "..."},
-    {"question": "What is the first movie in this year?", "expects": ""},
-    {"question": "Is that health care system still good?", "expects": ""},
-    {"question": "What is a possibility for raining tomorrow?", "expects": ""},
-    {"question": "How is the world cup champion?", "expects": ""},
-    {"question": "What number is the lucky number?", "expects": ""},
+    {
+        # thread_internship_timing.txt, reply 1
+        "question": "When should I start applying for a summer internship?",
+        "expects": "October",
+    },
+    {
+        # thread_laptop_specs.txt, replies 1 and 3
+        "question": "How much RAM do students recommend for a laptop for CS courses?",
+        "expects": "16",
+    },
+    {
+        # thread_meal_plan_tier.txt, reply 1
+        "question": "Which meal plan tier do students recommend for most people?",
+        "expects": "middle tier",
+    },
+    {
+        # thread_pass_fail.txt, reply 2
+        "question": "How late in the term can you declare the pass/fail option?",
+        "expects": "week eight",
+    },
+    {
+        # thread_laundry_timing.txt, reply 1
+        "question": "When are the dorm laundry rooms least busy?",
+        "expects": "Tuesday",
+    },
 ]
 
 # Questions from a different world entirely. Your gate should refuse all five.
