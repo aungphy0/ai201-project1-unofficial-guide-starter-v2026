@@ -203,111 +203,256 @@ Write down specifics before the meeting. 'It's not working' is hard to act on; '
 
 ## Run Log — Before
 
-<!-- Your five criteria, three runs each. `python run_eval.py --label before`
-     runs the questions, puts the OUT_OF_SCOPE ones through the gate, and
-     writes it all into results/ for you. Targets come from criteria.md; the
-     verdict column is your call.
+Evidence file: `results/run_2026-09-23_1859_after_advice.md`, produced by
+`run_eval.py::main` (gate evidence from `run_eval.py::check_out_of_scope`).
+Corpus `advice_threads`, chunks from `chunker.py::fallback_split`
+(800 characters, 120 overlap), top-k 5, cutoff 0.6.
 
-     Criterion 3 is measured in one deterministic pass rather than three, so
-     the same number goes in all three run columns. That's correct, not lazy.
-
-     Milestone 1. -->
+> Note on the file name: this run was labelled `after_advice` because it came
+> after I switched from `campus_life` to `advice_threads` and fixed my scorer
+> and questions. It is the **before** for my unit 2 improvement: it is the
+> first run with my final questions, the right corpus, and the original
+> chunker. Earlier files in `results/` used broken questions or the wrong
+> corpus, so I don't count them.
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
-| 1. Retrieved chunk contains the answer | 4 of 5 |  |  |  |  |
-| 2. Every answer names a source | 5 of 5 |  |  |  |  |
-| 3. Gate stops out-of-corpus questions | 4 of 5 |  |  |  |  |
-| 4. | | | | | |
-| 5. | | | | | |
+| 1. Retrieved chunk contains the answer | 4 of 5 | 5 of 5 | 5 of 5 | 5 of 5 | MET |
+| 2. Every answer names a source | 5 of 5 | 5 of 5 | 5 of 5 | 5 of 5 | MET |
+| 3. Gate stops out-of-corpus questions | 4 of 5 | 5 of 5 | 5 of 5 | 5 of 5 | MET |
+| 4. Retrieved chunks are 200–800 tokens and carry the answer without excessive unrelated text | 4 of 5 | 0 of 5 | 0 of 5 | 0 of 5 | MISSED |
+| 5. Every key claim in the answer is supported by the cited source, nothing invented | 4 of 5 | 5 of 5 | 5 of 5 | 5 of 5 | MET |
 
-<!-- Underneath, paste the REAL output for each criterion from one of your
-     runs — the actual text your system produced, not a description of it.
-     Name the file and function that produced it. -->
+How each number was counted:
+
+- **1** — the answering thread appears in "Sources retrieved" for all five
+  questions in all three runs, and every answer contains the `expects` keyword
+  (`scorer.py::judge` returned pass 15/15).
+- **3** — one deterministic pass; same number in every column.
+- **4** — also deterministic (chunking doesn't change between runs).
+  `chunker.py::fallback_split` returns each thread as a single chunk because
+  every file is under 800 characters. The five answering chunks are about
+  120–195 tokens (thread_internship_timing ≈ 120, thread_laundry_timing ≈ 135,
+  thread_laptop_specs ≈ 146, thread_meal_plan_tier ≈ 185,
+  thread_pass_fail ≈ 193). None reaches 200.
+- **5** — checked by hand: I read each of the 15 answers next to the thread it
+  cited.
+
+### Real output (from `results/run_2026-09-23_1859_after_advice.md`)
+
+**Criteria 1, 2 and 5** — `run_eval.py::run_once` → `store.py::search` → `generate.py::answer_from_chunks`
+
+```
+Q: How late in the term can you declare the pass/fail option? — run 1
+- Best distance: 0.4741 (passed the gate)
+- Sources retrieved: thread_first_year_regret.txt, thread_group_project.txt, thread_late_work.txt, thread_pass_fail.txt
+
+You can declare the pass/fail option as late as week eight.
+
+This information comes from `thread_pass_fail.txt` and `thread_first_year_regret.txt`.
+```
+
+```
+Q: How much RAM do students recommend for a laptop for CS courses? — run 1
+- Best distance: 0.1905 (passed the gate)
+- Sources retrieved: thread_first_gen.txt, thread_laptop_specs.txt, thread_pass_fail.txt, thread_printing.txt, thread_professor_email.txt
+
+Students recommend 16GB of RAM for a laptop for CS courses.
+
+Source: `thread_laptop_specs.txt`
+```
+
+```
+Q: When are the dorm laundry rooms least busy? — run 1
+- Best distance: 0.3789 (passed the gate)
+- Sources retrieved: thread_commuting.txt, thread_laundry_timing.txt, thread_professor_email.txt, thread_roommate_conflict.txt, thread_study_spots.txt
+
+Laundry is actually free in the dorms on Tuesday and Wednesday mornings in every building.
+
+Source: thread_laundry_timing.txt
+```
+
+**Criterion 3** — `run_eval.py::check_out_of_scope`, cutoff 0.6, refused 5 of 5
+
+```
+| What is the capital of Mongolia?                            | 0.890 | refused |
+| How do I change the oil in a diesel engine?                 | 0.930 | refused |
+| Who won the 1994 World Cup?                                 | 0.787 | refused |
+| What is the recommended dosage of ibuprofen for a headache? | 0.828 | refused |
+| How do I write a for loop in Rust?                          | 0.871 | refused |
+```
+
+**Criterion 4** — `chunker.py::fallback_split`, the chunk that answers the pass/fail question (`thread_pass_fail.txt#0`, ≈193 tokens)
+
+```
+THREAD: When should you actually use the pass/fail option?
+
+--- reply 1 (24 votes) ---
+For a course outside your major that you're taking because you're curious. That's what it's for and most people never use it.
+
+--- reply 2 (38 votes) ---
+The part that isn't advertised: you can declare it as late as week eight. So take the midterm first, then decide.
+
+--- reply 3 (20 votes) ---
+Careful with this one if you're applying to graduate programmes. Some want a letter grade for prerequisites and a P doesn't satisfy it.
+
+--- reply 4 (12 votes) ---
+Two per year and eight across the degree. I hit the annual limit in second year and regretted spending one on an easy course.
+```
 
 ## Verdicts
 
-<!-- MET or MISSED for each of the five, against the target you wrote last
-     unit — not a new one. Plus a sentence on how you decided. That sentence
-     matters most where it was close.
-
-     If your target said 4 of 5 and your runs came out 4, 3, 4, that's a MISS.
-     The target has to hold, not show up occasionally.
-
-     Milestone 2. -->
-
 | # | Criterion | Verdict | How I decided |
 |---|---|---|---|
-| 1 |  |  |  |
-| 2 |  |  |  |
-| 3 |  |  |  |
-| 4 |  |  |  |
-| 5 |  |  |  |
+| 1 | Retrieved chunk contains the answer | MET | The answering thread was retrieved for 5 of 5 questions in all three runs, above the 4-of-5 target every time. |
+| 2 | Every answer names a source | MET | All 15 answers name at least one `.txt` file; the target was 5 of 5 and it held in every run. |
+| 3 | Gate stops out-of-corpus questions | MET | 5 of 5 refused. The closest one (World Cup, 0.787) is still well above the 0.6 cutoff, and the furthest in-scope question (pass/fail, 0.474) is well below it. |
+| 4 | Chunks are 200–800 tokens and carry the answer without excessive unrelated text | MISSED | 0 of 5 answering chunks reach 200 tokens. It also misses on the "unrelated text" half: in the pass/fail chunk above, 3 of the 4 replies are not about the deadline. |
+| 5 | Answer is supported by the cited source | MET | I found the supporting sentence for every claim in all 15 answers. Closest call: the laundry answer says laundry is "free", which reads like no cost. The thread uses "free" to mean "machines available", so the claim is supported, but the wording could mislead a reader. I counted it as supported. |
 
 ## Diagnoses
 
-<!-- For each miss: which stage caused it, and how. The stage alone isn't
-     enough — you need the mechanism.
+**Criterion 4 — stage: chunking.**
 
-     Not a diagnosis: "Question 3 didn't work."
-     A diagnosis:     "Question 3 asks about laundry costs. The answer is in
-                       one sentence that got split across two chunks, so
-                       neither chunk on its own contains it."
+`CHUNK_SIZE` is 800 *characters* but my criterion is in *tokens*. Every
+`advice_threads` file is under 800 characters (shortest 320, longest 796), so
+`fallback_split` never cuts anything: each thread becomes exactly one chunk of
+roughly 90–225 tokens. The five threads my questions hit are all under 200.
+The size half of the criterion can't be met by tuning `CHUNK_SIZE`, because a
+bigger window has nothing more to take from the same file. The only way to get
+over 200 tokens would be to merge different threads into one chunk, which
+breaks the other half of the same criterion ("without excessive unrelated
+information").
 
-     The five stages: loading → chunking → embedding → retrieval → generation.
+The unrelated-text half is also a chunking problem. One thread is several
+replies, and each of my questions is answered by one reply (pass/fail → reply
+2, internship → reply 1, meal plan → reply 1, laundry → reply 1). Whole-thread
+chunks always carry the other replies along. That shows up in retrieval too:
+the pass/fail question's best distance is 0.474, the weakest of the five,
+because the "week eight" sentence is diluted by three replies about other
+things.
 
-     Look for a pattern. If three misses all ask about numbers, that's one
-     problem, not three.
-
-     Missed nothing? Say so, then say honestly whether your targets were set
-     low, and which one you'd tighten and to what.
-
-     Milestone 3. -->
+No other misses. Criteria 1, 2, 3 and 5 all had headroom (5 of 5 against a
+4-of-5 or 5-of-5 target), so those targets were probably set too low for a
+corpus this small and clean. If I tightened one, it would be criterion 1: "the
+**top-ranked** chunk is from the answering thread" for 5 of 5, instead of "any
+of the 5 retrieved chunks".
 
 ## The Improvement
 
-**What I changed:**
+**What I changed:** I replaced the body of `chunker.py::split_documents` so it
+splits each thread on its `--- reply N ---` markers. Each chunk is one reply,
+with the `THREAD:` title line repeated at the top so a short reply like
+"Tuesday and Wednesday mornings, every building" still makes sense on its own.
+Replies are never cut mid-sentence. The corpus goes from 23 chunks (avg 545
+characters) to 75 chunks (avg 202 characters, 132–281).
 
-**Why I picked it:**
-
-<!-- Connect it to a specific diagnosis above in one sentence. If you can't,
-     you picked a fix because it sounded impressive. -->
+**Why I picked it:** My criterion 4 diagnosis says the answering reply shares
+its chunk with unrelated replies, and that is the half of criterion 4 I can
+fix without merging threads. I expect this to make the size half *worse*
+(chunks get smaller, not bigger). I'm reporting that rather than hiding it.
 
 ### Run Log — After
 
-<!-- Same format, same five criteria, three runs each.
-     `python run_eval.py --label after` -->
+Evidence file: `results/run_2026-10-04_1938_after.md`, produced by
+`run_eval.py::main`. Same corpus, questions, top-k 5 and cutoff 0.6 as before;
+the only change is chunks now come from `chunker.py::split_documents`.
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
-| 1. Retrieved chunk contains the answer | 4 of 5 |  |  |  |  |
-| 2. Every answer names a source | 5 of 5 |  |  |  |  |
-| 3. Gate stops out-of-corpus questions | 4 of 5 |  |  |  |  |
-| 4. | | | | | |
-| 5. | | | | | |
+| 1. Retrieved chunk contains the answer | 4 of 5 | 5 of 5 | 5 of 5 | 5 of 5 | MET |
+| 2. Every answer names a source | 5 of 5 | 5 of 5 | 5 of 5 | 5 of 5 | MET |
+| 3. Gate stops out-of-corpus questions | 4 of 5 | 5 of 5 | 5 of 5 | 5 of 5 | MET |
+| 4. Retrieved chunks are 200–800 tokens and carry the answer without excessive unrelated text | 4 of 5 | 0 of 5 | 0 of 5 | 0 of 5 | MISSED |
+| 5. Every key claim in the answer is supported by the cited source, nothing invented | 4 of 5 | 5 of 5 | 5 of 5 | 5 of 5 | MET |
+
+How each number was counted: same method as the Before table. Criterion 4 is
+still 0 of 5 on size (each chunk is now one reply, roughly 35–70 tokens), but
+on the unrelated-text half it is now 5 of 5: the chunk that answers each
+question is the single reply that contains the answer, plus the thread title.
+
+Best distance per question (lower = closer match):
+
+| Question | Before | After |
+|---|---|---|
+| Internship timing | 0.301 | 0.190 |
+| Laptop RAM | 0.191 | 0.156 |
+| Meal plan tier | 0.332 | 0.294 |
+| Pass/fail deadline | 0.474 | 0.217 |
+| Laundry timing | 0.379 | 0.278 |
+| Out-of-scope range | 0.787–0.930 | 0.807–0.896 |
+
+### Real output (from `results/run_2026-10-04_1938_after.md`)
+
+```
+Q: How late in the term can you declare the pass/fail option? — run 1
+- Best distance: 0.2170 (passed the gate)
+- Sources retrieved: thread_first_year_regret.txt, thread_pass_fail.txt
+
+You can declare the pass/fail option as late as week eight (source: `thread_pass_fail.txt` and `thread_first_year_regret.txt`).
+```
+
+```
+Q: When are the dorm laundry rooms least busy? — run 2
+- Best distance: 0.2784 (passed the gate)
+- Sources retrieved: thread_laundry_timing.txt, thread_roommate_conflict.txt
+
+Laundry rooms are least busy on Tuesday and Wednesday mornings in every building, according to **thread_laundry_timing.txt**.
+```
+
+```
+Out-of-scope, `run_eval.py::check_out_of_scope`, cutoff 0.6 — refused 5 of 5
+| What is the capital of Mongolia?                            | 0.893 | refused |
+| How do I change the oil in a diesel engine?                 | 0.896 | refused |
+| Who won the 1994 World Cup?                                 | 0.893 | refused |
+| What is the recommended dosage of ibuprofen for a headache? | 0.807 | refused |
+| How do I write a for loop in Rust?                          | 0.835 | refused |
+```
 
 **Did it help?**
 
-<!-- Say plainly whether it did, and how you know. If it made things worse,
-     say that — a change that backfired, honestly reported, earns full credit
-     and is more interesting than one that worked. What matters is that you can
-     tell.
+Yes for the problem I aimed at, no for the verdicts. Every criterion has the
+same verdict as before: 1, 2, 3 and 5 MET, 4 still MISSED. As I predicted, the
+size half of criterion 4 got further away (chunks went from ~120–195 tokens to
+~35–70).
 
-     Milestone 4. -->
+What did improve is retrieval. The best distance dropped for all five
+questions, and the biggest gain was the one my diagnosis pointed at: pass/fail
+went from 0.474 to 0.217 once the "week eight" reply stopped sharing a chunk
+with three unrelated replies. The gate got safer too. Before, the gap between
+my worst in-scope question (0.474) and my closest out-of-scope question
+(0.787) was 0.31. Now it is 0.29 to 0.81, a gap of 0.51, so 0.6 sits much more
+comfortably in the middle. Fewer unrelated threads come back as well (2–3
+source files per question instead of 4–5).
+
+One answer-quality change I didn't expect: before, the laundry answer said
+laundry is "free", which could be read as no cost. After, all three runs say
+"least busy" or "free (least busy)". With only the one reply and the title in
+front of it, the model read "free" the way the thread meant it.
 
 ## What's Still Broken
 
-<!-- For each criterion still missed after your fix: what you'd do about it,
-     and why you stopped where you did.
+**Criterion 4 (size half).** It is still missed and I stopped there on
+purpose. No thread in `advice_threads` is long enough for a 200-token chunk,
+so the only way to hit the target is to glue unrelated threads together. That
+would make retrieval worse to satisfy a number. The real problem is the
+criterion, not the pipeline (see below).
 
-     "I ran out of time" is fine if it's true. Pretending nothing is left is
-     not.
-
-     Milestone 5. -->
+**Scorer limit.** `scorer.py::judge` only checks that a keyword appears. The
+laundry answer passes because it contains "Tuesday", but it also says
+"free", which a reader could take to mean no cost. A keyword scorer can't catch
+that, which is why I checked criterion 5 by hand.
 
 ## What I'd Do Differently
 
-<!-- Knowing what you know now — which of your five criteria would you write
-     differently, and why?
+I'd rewrite **criterion 4**. I wrote "200–800 tokens" before measuring my
+documents, and it mixed up units: the config counts characters and the
+criterion counts tokens. The longest thread in the corpus is about 225 tokens,
+so the floor was close to impossible from the start. A better version, based on
+what I actually saw: "For at least 4 of 5 questions, the chunk containing the
+answer holds no more than one reply that is unrelated to the question, and no
+reply is cut mid-sentence." That is countable and fits a corpus of short
+threads.
 
-     Milestone 5. -->
+I'd also set criteria 1 and 3 higher. Both cleared their targets with room to
+spare, so they didn't tell me much.

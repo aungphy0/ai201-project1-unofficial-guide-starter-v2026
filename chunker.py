@@ -96,8 +96,47 @@ def split_documents(documents: list[Document]) -> list[Chunk]:
       - Is the useful information in one sentence, or spread over a paragraph?
       - Would splitting on paragraph breaks keep more thoughts intact than
         splitting on a character count?
+
+    Unit 2 improvement: one chunk per reply, with the thread title on top.
+
+    Every advice_threads file is shorter than CHUNK_SIZE, so fallback_split
+    returned each whole thread as one chunk. The answer to a question usually
+    sits in a single reply, and the other replies in that chunk are about
+    something else (e.g. thread_pass_fail's "week eight" reply shares a chunk
+    with replies about grad school and annual limits). Splitting on the
+    "--- reply N ---" markers keeps each reply whole, and repeating the THREAD
+    line keeps a short reply like "Tuesday and Wednesday mornings" meaningful
+    on its own.
     """
-    return fallback_split(documents)
+    import re
+
+    reply_marker = re.compile(r"^--- reply \d+ .*---$", re.MULTILINE)
+
+    chunks: list[Chunk] = []
+    for doc in documents:
+        text = doc.text.strip()
+        markers = list(reply_marker.finditer(text))
+        if not markers:
+            # Not a thread: fall back to the plain splitter for this document.
+            chunks.extend(fallback_split([doc]))
+            continue
+
+        title = text[: markers[0].start()].strip()
+        for i, m in enumerate(markers):
+            end = markers[i + 1].start() if i + 1 < len(markers) else len(text)
+            reply = text[m.start():end].strip()
+            if not reply:
+                continue
+            chunks.append(
+                Chunk(
+                    text=f"{title}\n\n{reply}",
+                    source=doc.source,
+                    index=i,
+                    produced_by="chunker.py::split_documents",
+                )
+            )
+
+    return chunks
 
 
 def describe(chunks: list[Chunk]) -> str:
